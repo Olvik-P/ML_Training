@@ -1,0 +1,25 @@
+# Минимальные зависимости для улучшенной версии train_improved.py
+# Только необходимые пакеты для работы скрипта
+
+# Основные библиотеки для анализа данных
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Машинное обучение
+scikit-learn>=1.0.0
+
+# Визуализация (обязательные)
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Научные вычисления
+scipy>=1.7.0
+
+# Утилиты
+python-dateutil>=2.8.0
+
+# Установка:
+# pip install -r requirements_minimal.txt
+
+# Для быстрой установки всех зависимостей:
+# pip install pandas scikit-learn matplotlib seaborn numpy scipy python-dateutil
