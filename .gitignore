@@ -170,5 +170,5 @@ cython_debug/
 .vscode/
 
 training.md
-Lesson/11. prompt-eng-interactive-tutorial/
-Lesson/2. Python. Предобработка данных/
+**/11. prompt-eng-interactive-tutorial/
+**/2. Python. Предобработка данных/
