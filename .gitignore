@@ -172,3 +172,4 @@ cython_debug/
 training.md
 **/11. prompt-eng-interactive-tutorial/
 **/2. Python. Предобработка данных/
+**/data/
