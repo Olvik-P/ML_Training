@@ -39,5 +39,4 @@ def remean_points(row):
 
 print('apple \n', wine_reviews.apply(remean_points, axis='columns'))
 
-
 print(wine_reviews['country'].drop_duplicates())
