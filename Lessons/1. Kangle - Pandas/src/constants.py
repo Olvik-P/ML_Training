@@ -12,3 +12,5 @@ GROUP_PRICE = 'price'
 GROUP_WINERY = 'winery'
 GROUP_TITLE = 'title'
 GROUP_LEN = 'len'
+
+STR_UNKNOWN = 'Unknown'
