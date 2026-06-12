@@ -1,7 +1,8 @@
 from pathlib import Path
 
 DATASET_FILE = 'data/wine-reviews/winemag-data-130k-v2.csv'
-DATASET_PATH = Path(__file__).resolve().parent.parent / DATASET_FILE
+STR_PATH = Path(__file__).resolve().parent.parent
+DATASET_PATH = STR_PATH / DATASET_FILE
 INDEX_COL = 0
 DISPLAY_MAX_ROWS = 5
 
