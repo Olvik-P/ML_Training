@@ -1,11 +1,10 @@
-"""🤖 Агент-пылесос для уборки комнаты.
+"""Агент-пылесос для уборки комнаты.
 
-Демонстрирует цикл восприятие → анализ → действие (sense-act cycle).
+Демонстрирует цикл восприятие -> анализ -> действие (sense-act cycle).
 Агент перемещается по двумерной комнате и собирает мусор.
 """
 
 import random
-import sys
 import time
 
 from constants import (
@@ -15,17 +14,12 @@ from constants import (
     DEFAULT_DELAY,
     DEFAULT_STEPS,
     MOVEMENT_OFFSETS,
-    SEPARATOR_WIDTH,
-    STEP_FORWARD,
-    VAL_MIN,
     RANDOM_SEED,
     ROOM_SIZE,
+    SEPARATOR_WIDTH,
     STEPS,
-    TRASH_VALUES
+    TRASH_VALUES,
 )
-
-print(f"✅ Python версия: {sys.version_info.major}.{sys.version_info.minor}")
-print("✅ Библиотеки готовы: random, time, sys — всё своё, без интернета")
 
 
 class VacuumAgent:
@@ -34,8 +28,8 @@ class VacuumAgent:
     def __init__(
         self,
         room: list[list[int]],
-        start_row: int = CLEAN,
-        start_col: int = CLEAN,
+        start_row: int = 0,
+        start_col: int = 0,
     ) -> None:
         """Инициализация агента.
 
@@ -47,89 +41,136 @@ class VacuumAgent:
         """
         self.room = room
         self.rows = len(room)
-        self.cols = len(room[CLEAN]) if room else CLEAN
+        self.cols = len(room[0]) if room else 0
         self.row = start_row
         self.col = start_col
         self.cleaned = CLEAN
-        print("🤖 Пылесос создан! Начинаю уборку...")
+        self.visited: set[tuple[int, int]] = set()
+        self.visited.add((start_row, start_col))
+        self.all_cells = {
+            (row, col)
+            for row in range(self.rows)
+            for col in range(self.cols)
+        }
 
     def perceive(self) -> int:
         """Восприятие: проверить, есть ли мусор в текущей клетке.
 
         Returns:
-            1 если мусор есть, 0 если чисто.
+            TRASH если мусор есть, CLEAN если чисто.
 
         """
         return self.room[self.row][self.col]
 
-    @staticmethod
-    def decide(has_trash: int) -> str:
+    def _get_neighbours(self) -> list[tuple[int, int]]:
+        """Вернуть список соседних клеток (вверх, вниз, влево, вправо).
+
+        Returns:
+            Список координат соседних клеток в пределах комнаты.
+
+        """
+        neighbours: list[tuple[int, int]] = []
+        for dr, dc in MOVEMENT_OFFSETS:
+            new_row = self.row + dr
+            new_col = self.col + dc
+            if 0 <= new_row < self.rows and 0 <= new_col < self.cols:
+                neighbours.append((new_row, new_col))
+        return neighbours
+
+    def _choose_target(
+        self,
+        neighbours: list[tuple[int, int]],
+        unvisited: set[tuple[int, int]],
+    ) -> tuple[int, int]:
+        """Выбрать целевую клетку для перемещения.
+
+        Приоритеты:
+            1. Непосещённый сосед.
+            2. Ближайшая непосещённая клетка (манхэттенское расстояние).
+            3. Любой сосед (все клетки посещены).
+
+        Args:
+            neighbours: Список соседних клеток.
+            unvisited: Множество непосещённых клеток.
+
+        Returns:
+            Координаты целевой клетки.
+
+        """
+        unvisited_neighbours = [
+            (r, c) for r, c in neighbours if (r, c) in unvisited
+        ]
+
+        if unvisited_neighbours:
+            return random.choice(unvisited_neighbours)
+
+        if unvisited:
+            return min(
+                unvisited,
+                key=lambda cell: (
+                    abs(cell[0] - self.row) + abs(cell[1] - self.col)
+                ),
+            )
+
+        return random.choice(neighbours)
+
+    def decide(
+        self, has_trash: int,
+    ) -> tuple[str, tuple[int, int] | None]:
         """Анализ: принять решение на основе восприятия.
 
         Args:
-            has_trash: 1 если есть мусор, 0 если чисто.
+            has_trash: TRASH если есть мусор, CLEAN если чисто.
 
         Returns:
-            "CLEAN" если мусор есть, иначе "MOVE".
+            Пара (действие, целевая клетка).
 
         """
-        return ACTION_CLEAN if has_trash else ACTION_MOVE
+        if has_trash:
+            return ACTION_CLEAN, None
 
-    def _new_coordinate(self, val: int, max_val: int) -> int:
-        """Вычислить новую координату со случайным смещением в соседнюю клетку.
+        neighbours = self._get_neighbours()
+        unvisited = self.all_cells - self.visited
+        target = self._choose_target(neighbours, unvisited)
+        return ACTION_MOVE, target
 
-        Агент не остаётся на месте — всегда двигается на ±1,
-        если только не упёрся в границу (тогда только внутрь).
-
-        Args:
-            val: Текущая координата.
-            max_val: Максимальное значение координаты (не включая).
-
-        Returns:
-            Новая координата в пределах [0, max_val).
-
-        """
-        if max_val <= STEP_FORWARD:
-            return CLEAN  # некуда двигаться
-
-        if val == VAL_MIN:
-            return val + STEP_FORWARD  # только вправо/вниз
-        if val == max_val - STEP_FORWARD:
-            return val - STEP_FORWARD  # только влево/вверх
-        return val + random.choice(MOVEMENT_OFFSETS)
-
-    def act(self, decision: str) -> str:
+    def act(
+        self, decision: str, target: tuple[int, int] | None,
+    ) -> str:
         """Действие: убрать мусор или переместиться.
 
         Args:
-            decision: "CLEAN" или "MOVE".
+            decision: ACTION_CLEAN или ACTION_MOVE.
+            target: Целевая клетка для перемещения (None для уборки).
 
         Returns:
             Сообщение о выполненном действии.
 
         """
+        self.visited.add((self.row, self.col))
         if decision == ACTION_CLEAN:
             self.room[self.row][self.col] = CLEAN
-            self.cleaned += STEP_FORWARD
-            return f"🧹 Убрал мусор в клетке ({self.row},{self.col})"
+            self.cleaned += 1
+            return f'Убрал мусор в клетке ({self.row},{self.col})'
+
         # MOVE
-        self.row = self._new_coordinate(self.row, self.rows)
-        self.col = self._new_coordinate(self.col, self.cols)
-        return f"🚶‍♂️ Переместился в ({self.row},{self.col})"
+        assert target is not None
+        self.row, self.col = target
+        return f'Переместился в ({self.row},{self.col})'
 
     def step(self) -> str:
-        """Один цикл агента: восприятие → анализ → действие.
+        """Один цикл агента: восприятие -> анализ -> действие.
 
         Returns:
             Сообщение о выполненном действии.
 
         """
         trash_here = self.perceive()
-        action = self.decide(trash_here)
-        return self.act(action)
+        action, target = self.decide(trash_here)
+        return self.act(action, target)
 
     def run(
-        self, steps: int = DEFAULT_STEPS, delay: float = DEFAULT_DELAY
+        self, steps: int = DEFAULT_STEPS, delay: float = DEFAULT_DELAY,
     ) -> int:
         """Запустить агента на несколько шагов.
 
@@ -141,11 +182,19 @@ class VacuumAgent:
             Количество убранного мусора.
 
         """
-        print("=" * SEPARATOR_WIDTH)
+        print('=' * SEPARATOR_WIDTH)
         for i in range(steps):
-            print(f"Шаг {i+1}: {self.step()}")
+            print(f'Шаг {i + 1}: {self.step()}')
             time.sleep(delay)
-        print(f"\n✅ Уборка завершена. Убрано {self.cleaned} единиц мусора.")
+            if not (self.all_cells - self.visited):
+                print(
+                    f'\nОбследовал все {len(self.visited)} клеток комнаты!',
+                )
+                break
+        print(
+            f'\nУборка завершена. Убрано {self.cleaned} единиц мусора. '
+            f'Не убрано {len(self.all_cells - self.visited)} клеток.',
+        )
         return self.cleaned
 
 
@@ -156,12 +205,13 @@ def setup_room() -> list[list[int]]:
         Двумерный список, где 1 = мусор, 0 = чисто.
 
     """
-    # чтобы результат был одинаковым у всех (для проверки)
     random.seed(RANDOM_SEED)
-    room_with_trash = [[random.choice(TRASH_VALUES) for _ in range(
-        ROOM_SIZE)] for _ in range(ROOM_SIZE)]
+    room_with_trash = [
+        [random.choice(TRASH_VALUES) for _ in range(ROOM_SIZE)]
+        for _ in range(ROOM_SIZE)
+    ]
 
-    print("🗺️ Карта комнаты (1 = мусор, 0 = чисто):")
+    print('Карта комнаты (1 = мусор, 0 = чисто):')
     for row in room_with_trash:
         print(row)
 
@@ -169,6 +219,7 @@ def setup_room() -> list[list[int]]:
 
 
 # ------------------- ЗАПУСКАЕМ АГЕНТА -------------------
-if __name__ == "__main__":
+if __name__ == '__main__':
     agent = VacuumAgent(setup_room())
+    print('Пылесос создан! Начинаю уборку...')
     cleaned_total = agent.run(steps=STEPS)

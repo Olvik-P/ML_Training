@@ -22,7 +22,7 @@ CLEAN: Final[int] = 0       # клетка чистая
 # ──────────────────────────────────────────────
 STEP_FORWARD: Final[int] = 1   # смещение вперёд / вправо / вниз
 STEP_BACKWARD: Final[int] = -1  # смещение назад / влево / вверх
-MOVEMENT_OFFSETS: Final[list[int]] = [STEP_BACKWARD, STEP_FORWARD]
+MOVEMENT_OFFSETS: Final[list[int]] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 TRASH_VALUES: Final[list[int]] = [CLEAN, TRASH]
 
 # ──────────────────────────────────────────────
@@ -30,12 +30,12 @@ TRASH_VALUES: Final[list[int]] = [CLEAN, TRASH]
 # ──────────────────────────────────────────────
 DEFAULT_STEPS: Final[int] = 10
 DEFAULT_DELAY: Final[float] = 0.3
-SEPARATOR_WIDTH: Final[int] = 50
+SEPARATOR_WIDTH: Final[int] = 70
 
 # ──────────────────────────────────────────────
 # Параметры комнаты (блок __main__)
 # ──────────────────────────────────────────────
-ROOM_SIZE: Final[int] = 3
+ROOM_SIZE: Final[int] = 10
 RANDOM_SEED: Final[int] = 42
-STEPS: Final[int] = 30
+STEPS: Final[int] = 150
 VAL_MIN: Final[int] = 0
