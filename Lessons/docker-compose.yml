@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  tensorflow:
+    image: tensorflow/tensorflow:2.15.0-gpu-jupyter
+    container_name: my_tensorflow
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/tf/Lessons
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
